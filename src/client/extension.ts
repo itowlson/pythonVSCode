@@ -19,7 +19,6 @@ import { activateSetInterpreterProvider } from './providers/setInterpreterProvid
 import { activateExecInTerminalProvider } from './providers/execInTerminalProvider';
 import { Commands } from './common/constants';
 import * as tests from './unittests/main';
-import * as jup from './jupyter/main';
 import { HelpProvider } from './helpProvider';
 import { activateUpdateSparkLibraryProvider } from './providers/updateSparkLibraryProvider';
 import { activateFormatOnSaveProvider } from './providers/formatOnSaveProvider';
@@ -34,7 +33,6 @@ const PYTHON: vscode.DocumentFilter = { language: 'python', scheme: 'file' };
 let unitTestOutChannel: vscode.OutputChannel;
 let formatOutChannel: vscode.OutputChannel;
 let lintingOutChannel: vscode.OutputChannel;
-let jupMain: jup.Jupyter;
 
 export function activate(context: vscode.ExtensionContext) {
     let pythonSettings = settings.PythonSettings.getInstance();
@@ -104,12 +102,6 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(PYTHON, formatProvider));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(PYTHON, formatProvider));
 
-
-    jupMain = new jup.Jupyter(lintingOutChannel);
-    const documentHasJupyterCodeCells = jupMain.hasCodeCells.bind(jupMain);
-    jupMain.activate();
-    context.subscriptions.push(jupMain);
-
     context.subscriptions.push(new LintProvider(context, lintingOutChannel, documentHasJupyterCodeCells));
     tests.activate(context, unitTestOutChannel);
 
@@ -124,6 +116,9 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(hepProvider);
 
     context.subscriptions.push(activateSingleFileDebug());
+}
+function documentHasJupyterCodeCells(doc: vscode.TextDocument, token: vscode.CancellationToken): Promise<Boolean> {
+    return Promise.resolve(false);
 }
 
 // this method is called when your extension is deactivated
