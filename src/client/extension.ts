@@ -24,6 +24,7 @@ import { activateUpdateSparkLibraryProvider } from './providers/updateSparkLibra
 import { activateFormatOnSaveProvider } from './providers/formatOnSaveProvider';
 import { WorkspaceSymbols } from './workspaceSymbols/main';
 import { BlockFormatProviders } from './typeFormatters/blockFormatProvider';
+import { JupyterProvider } from './jupyter/provider';
 import * as os from 'os';
 import * as fs from 'fs';
 import { activateSingleFileDebug } from './singleFileDebug';
@@ -116,9 +117,24 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(hepProvider);
 
     context.subscriptions.push(activateSingleFileDebug());
+    registerJupyterProvider();
 }
 function documentHasJupyterCodeCells(doc: vscode.TextDocument, token: vscode.CancellationToken): Promise<Boolean> {
     return Promise.resolve(false);
+}
+
+function registerJupyterProvider() {
+    const jupyterExt = vscode.extensions.getExtension('donjayamanne.jupyter');
+    if (!jupyterExt) {
+        return;
+    }
+    if (jupyterExt.isActive) {
+        jupyterExt.exports.registerLanguageProvider(PYTHON.language, new JupyterProvider());
+    }
+
+    jupyterExt.activate().then(() => {
+        jupyterExt.exports.registerLanguageProvider(PYTHON.language, new JupyterProvider());
+    });
 }
 
 // this method is called when your extension is deactivated
